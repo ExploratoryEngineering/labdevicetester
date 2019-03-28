@@ -6,6 +6,7 @@ cross-compile-udpserver:
 
 .PHONY: deploy-udpserver
 deploy-udpserver: cross-compile-udpserver
+	ssh labdeviceserver "killall udpserver-linux-amd64"
 	scp udpserver-linux-amd64 labdeviceserver:
 	ssh labdeviceserver "./udpserver-linux-amd64"
 

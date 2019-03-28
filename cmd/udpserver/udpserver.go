@@ -18,7 +18,7 @@ func main() {
 	log.SetOutput(mw)
 	log.SetFlags(log.Ltime)
 
-	udpAddr := "127.0.0.1:1234"
+	udpAddr := ":1234"
 
 	addr, err := net.ResolveUDPAddr("udp", udpAddr)
 	if err != nil {

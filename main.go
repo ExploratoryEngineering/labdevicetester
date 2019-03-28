@@ -122,7 +122,8 @@ func sendSmallPacket(t devicetests.Interface) bool {
 		reportError()
 		return false
 	}
-	//defer t.CloseSocket(socket)
-	t.SendUDP(socket, *serverIP, 7, []byte("foo"))
+	defer t.CloseSocket(socket)
+	t.SendUDP(socket, *serverIP, 1234, []byte("hi"))
+	return true
 	return true
 }
