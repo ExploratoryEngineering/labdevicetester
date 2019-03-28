@@ -16,7 +16,7 @@ func main() {
 		serialDevice = flag.String("device", "/dev/cu.SLAB_USBtoUART", "Serial device")
 		deviceType   = flag.String("type", "", "Device family type (see pkg/devicefamily subfolders)")
 		verbose      = flag.Bool("v", false, "Verbose output")
-		printIds     = flag.Bool("print", false, "Print IMSI and IMEI and exit")
+		printIds     = flag.Bool("printids", false, "Print IMSI and IMEI and exit")
 		serverIP     = flag.String("serverip", "10.0.0.1", "IP address to the server receiving data")
 	)
 	flag.Parse()
@@ -25,7 +25,7 @@ func main() {
 	switch *deviceType {
 	default:
 		log.Fatal("Invalid device type")
-	case "n211":
+	case "n2":
 		device = saran2.New()
 	}
 
@@ -114,37 +114,37 @@ func reportError() {
 	log.Println("=======================================")
 }
 
-func clean(t devicefamily.Interface) bool {
-	return t.RebootModule() &&
-		t.AutoOperatorSelection() &&
-		t.PowerSaveMode(0, 255, 10) &&
-		t.DisableEDRX()
+func clean(d devicefamily.Interface) bool {
+	return d.RebootModule() &&
+		d.AutoOperatorSelection() &&
+		d.PowerSaveMode(0, 255, 10) &&
+		d.DisableEDRX()
 }
 
-func sendSmallPacket(t devicefamily.Interface, serverIP string) bool {
-	socket, err := t.CreateSocket("UDP", 1234)
+func sendSmallPacket(d devicefamily.Interface, serverIP string) bool {
+	socket, err := d.CreateSocket("UDP", 1234)
 	if err != nil {
 		log.Println("Error: ", err)
 		reportError()
 		return false
 	}
-	defer t.CloseSocket(socket)
-	t.SendUDP(socket, serverIP, 1234, []byte("hi"))
+	defer d.CloseSocket(socket)
+	d.SendUDP(socket, serverIP, 1234, []byte("hi"))
 	return true
 }
 
-// func sendAndReceive(t devicefamily.Interface) bool {
-// 	socket, err := t.CreateSocket("UDP", 1234)
+// func sendAndReceive(d devicefamily.Interface) bool {
+// 	socket, err := d.CreateSocket("UDP", 1234)
 // 	if err != nil {
 // 		log.Println("Error: ", err)
 // 		reportError()
 // 		return false
 // 	}
-// 	defer t.CloseSocket(socket)
+// 	defer d.CloseSocket(socket)
 
-// 	t.SendUDP(socket, *serverIP, 1234, []byte("echo hi"))
+// 	d.SendUDP(socket, *serverIP, 1234, []byte("echo hi"))
 
-// 	t.ReceiveUDP(socket, 7)
+// 	d.ReceiveUDP(socket, 7)
 
 // 	return true
 // }
