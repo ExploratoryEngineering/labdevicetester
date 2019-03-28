@@ -29,9 +29,13 @@ func main() {
 		device = saran2.New()
 	}
 
-	// otii.EnableMainPower()
+	// if err := otii.EnableMainPower(); err != nil {
+	// 	log.Fatal("Error enabling main power:", err)
+	// }
 	// defer otii.DisableMainPower()
-	// otii.Calibrate()
+	if err := otii.Calibrate(); err != nil {
+		log.Fatal("Error calibrating:", err)
+	}
 
 	s, err := serial.NewSerialConnection(*serialDevice, device.BaudRate(), *verbose)
 	if err != nil {
@@ -82,10 +86,14 @@ func main() {
 		time.Sleep(time.Second)
 	}
 
-	recording := record()
-	if !sendAndReceive(device, *serverIP) {
-		reportError()
-		return
+	recording := record(20 * time.Second)
+	time.Sleep(time.Second)
+	for i := 0; i < 3; i++ {
+		if !sendAndReceive(device, *serverIP) {
+			reportError()
+			return
+		}
+		time.Sleep(5 * time.Second)
 	}
 	<-recording
 
@@ -123,14 +131,14 @@ func clean(d devicefamily.Interface) bool {
 	return d.RebootModule() &&
 		d.SetAPN("telenor.iot") &&
 		d.AutoOperatorSelection() &&
-		d.PowerSaveMode(1, 255, 0) &&
+		d.PowerSaveMode(1, 255, 1) &&
 		d.DisableEDRX()
 }
 
-func record() chan struct{} {
+func record(duration time.Duration) chan struct{} {
 	ch := make(chan struct{})
 	go func() {
-		otii.Record()
+		otii.Record(duration)
 		ch <- struct{}{}
 	}()
 	return ch
@@ -144,7 +152,7 @@ func sendSmallPacket(d devicefamily.Interface, serverIP string) bool {
 		return false
 	}
 	defer d.CloseSocket(socket)
-	d.SendUDP(socket, serverIP, 1234, []byte("hi"))
+	d.SendUDP(socket, serverIP, 1234, devicefamily.SendFlagReleaseAfterNextMessage, []byte("hi"))
 	return true
 }
 
@@ -157,7 +165,7 @@ func sendAndReceive(d devicefamily.Interface, serverIP string) bool {
 	}
 	defer d.CloseSocket(socket)
 
-	d.SendUDP(socket, serverIP, 1234, []byte("echo hi"))
+	d.SendUDP(socket, serverIP, 1234, devicefamily.SendFlagReleaseAfterNextReply, []byte("echo hi"))
 
 	d.ReceiveUDP(socket, 7)
 

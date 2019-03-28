@@ -17,7 +17,7 @@ func New() *devicefamily.ATdevicefamily {
 		DisableEDRX:               `AT+CEDRXS=0,5`,
 		CreateUDPSocket:           `AT+NSOCR="DGRAM",17,%d,1`,
 		CloseSocket:               `AT+NSOCL=%d`,
-		SendUDP:                   `AT+NSOSTF=%d,"%v",%d,0x400,%d,"%X"`,
+		SendUDP:                   `AT+NSOSTF=%[1]d,"%[2]v",%[3]d,0x%03[4]x,%[5]d,"%[6]X"`,
 		ReceiveUDP:                `AT+NSORF=%d,%d`,
 		ReceivedMessageIndication: `+NSONMI`,
 	}

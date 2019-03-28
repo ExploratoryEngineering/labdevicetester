@@ -15,7 +15,7 @@ func New() *devicefamily.ATdevicefamily {
 		CreateUDPSocket:       `AT+USOCR=17,%d`,
 		CreateTCPSocket:       `AT+USOCR=6,%d`,
 		CloseSocket:           `AT+NSOCL=%d`,
-		SendUDP:               `AT+NSOST=%d,"%v",%d,%d,"%X"`,
+		SendUDP:               `AT+NSOST=%[1]d,"%[2]v",%[3]d,%[4]d,"%[6]X"`,
 	}
 	return devicefamily.New(spec)
 }

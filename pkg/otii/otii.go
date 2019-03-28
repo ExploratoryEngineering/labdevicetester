@@ -6,6 +6,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -23,9 +25,20 @@ func DisableMainPower() error {
 	return Run("otii.create_project():enable_main_power(false)")
 }
 
-func Record() error {
+func Calibrate() error {
+	log.Println("Calibrating...")
+	return Run(`
+		local devices = otii.get_devices("Arc")
+		assert(#devices > 0, "No available devices")
+		local box = otii.open_device(devices[1].id)
+		assert(box ~= nil, "No available otii")
+		box:calibrate()
+	`)
+}
+
+func Record(duration time.Duration) error {
 	log.Println("Recording started")
-	err := Run(recordScript)
+	err := Run(strings.Replace(recordScript, "DURATION", strconv.Itoa(int(duration/time.Millisecond)), -1))
 	log.Println("Recording complete")
 	return err
 }
@@ -80,7 +93,7 @@ box:enable_channel("mc", true)
 box:enable_channel("mv", true)
 
 project:start()
-otii.msleep(5000)
+otii.msleep(DURATION)
 project:stop()
 
 local filename = string.format("captures/capture_%s.otii", os.date("%Y-%m-%dT%H:%M:%S"))

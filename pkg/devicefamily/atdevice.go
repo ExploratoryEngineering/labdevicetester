@@ -208,10 +208,10 @@ func (t *ATdevicefamily) CloseSocket(socket int) bool {
 	return true
 }
 
-func (t *ATdevicefamily) SendUDP(socket int, ip string, port int, data []byte) bool {
+func (t *ATdevicefamily) SendUDP(socket int, ip string, port int, flag SendFlag, data []byte) bool {
 	log.Println("Sending UDP packet...")
 
-	cmd := fmt.Sprintf(t.spec.SendUDP, socket, ip, port, len(data), data)
+	cmd := fmt.Sprintf(t.spec.SendUDP, socket, ip, port, flag, len(data), data)
 	_, _, err := t.s.SendAndReceive(cmd)
 	if err != nil {
 		log.Printf("Error sending packet: %v", err)

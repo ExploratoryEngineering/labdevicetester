@@ -17,6 +17,15 @@ type Interface interface {
 	DisableEDRX() bool
 	CreateSocket(protocol string, listenPort int) (int, error)
 	CloseSocket(socket int) bool
-	SendUDP(socket int, ip string, port int, data []byte) bool
+	SendUDP(socket int, ip string, port int, flag SendFlag, data []byte) bool
 	ReceiveUDP(socket, expectedBytes int) ([]byte, error)
 }
+
+type SendFlag int
+
+const (
+	SendFlagNone                    SendFlag = 0x000
+	SendFlagHighPriority            SendFlag = 0x100
+	SendFlagReleaseAfterNextMessage SendFlag = 0x200
+	SendFlagReleaseAfterNextReply   SendFlag = 0x400
+)
