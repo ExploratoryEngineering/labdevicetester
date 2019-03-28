@@ -17,5 +17,5 @@ type Interface interface {
 	CreateSocket(protocol string, listenPort int) (int, error)
 	CloseSocket(socket int) bool
 	SendUDP(socket int, ip string, port int, data []byte) bool
-	//ReceiveUDP(expectedBytes int) bool
+	ReceiveUDP(socket, expectedBytes int) ([]byte, error)
 }

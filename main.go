@@ -105,6 +105,12 @@ func main() {
 		reportError()
 		return
 	}
+
+	// if !sendAndReceive(tests) {
+	// 	log.Println("Send and receive failed")
+	// 	reportError()
+	// 	return
+	// }
 	log.Println("Success!")
 }
 
@@ -125,5 +131,20 @@ func sendSmallPacket(t devicetests.Interface) bool {
 	defer t.CloseSocket(socket)
 	t.SendUDP(socket, *serverIP, 1234, []byte("hi"))
 	return true
-	return true
 }
+
+// func sendAndReceive(t devicetests.Interface) bool {
+// 	socket, err := t.CreateSocket("UDP", 1234)
+// 	if err != nil {
+// 		log.Printf("Error: ", err)
+// 		reportError()
+// 		return false
+// 	}
+// 	defer t.CloseSocket(socket)
+
+// 	t.SendUDP(socket, *serverIP, 1234, []byte("echo hi"))
+
+// 	t.ReceiveUDP(socket, 7)
+
+// 	return true
+// }

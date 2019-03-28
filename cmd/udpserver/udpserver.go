@@ -5,6 +5,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -36,13 +37,18 @@ func main() {
 
 	for {
 		buf := make([]byte, 4096)
-		n, addr, err := serverConn.ReadFromUDP(buf)
+		n, fromAddr, err := serverConn.ReadFromUDP(buf)
 		if err != nil {
 			log.Println("Error: ", err)
 			continue
 		}
 		if n > 0 {
-			log.Printf("Got %d bytes from %s: %s\n", n, addr, string(buf[0:n]))
+			received := string(buf[0:n])
+			log.Printf("Got %d bytes from %s: %s\n", n, fromAddr, received)
+
+			if strings.HasPrefix(received, "echo ") {
+				serverConn.WriteToUDP(buf[5:], fromAddr)
+			}
 		}
 	}
 }

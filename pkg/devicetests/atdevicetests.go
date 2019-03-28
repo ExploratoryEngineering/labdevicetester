@@ -16,14 +16,16 @@ type ATDeviceSpec struct {
 	// DisableAutoConnect string
 	// EnableAutoConnect  string
 	// ConfigAPN          string
-	AutoOperatorSelection string
-	RegistrationStatus    string
-	PSM                   string
-	DisableEDRX           string
-	CreateUDPSocket       string
-	CreateTCPSocket       string
-	CloseSocket           string
-	SendUDP               string
+	AutoOperatorSelection     string
+	RegistrationStatus        string
+	PSM                       string
+	DisableEDRX               string
+	CreateUDPSocket           string
+	CreateTCPSocket           string
+	CloseSocket               string
+	SendUDP                   string
+	ReceiveUDP                string
+	ReceivedMessageIndication string
 }
 
 type ATDeviceTests struct {
@@ -211,7 +213,6 @@ func (t *ATDeviceTests) SendUDP(socket int, ip string, port int, data []byte) bo
 	log.Println("Sending UDP packet...")
 
 	cmd := fmt.Sprintf(t.spec.SendUDP, socket, ip, port, len(data), data)
-	log.Printf(cmd)
 	_, _, err := t.s.SendAndReceive(cmd)
 	if err != nil {
 		log.Printf("Error sending packet: %v", err)
@@ -220,4 +221,23 @@ func (t *ATDeviceTests) SendUDP(socket int, ip string, port int, data []byte) bo
 
 	log.Println("Successfully sent data")
 	return true
+}
+
+func (t *ATDeviceTests) ReceiveUDP(socket, expectedBytes int) ([]byte, error) {
+	log.Println("Receiving UDP Packet...")
+
+	line, err := t.s.WaitForURC(t.spec.ReceivedMessageIndication)
+	if err != nil {
+		log.Printf("Error receive URC: %v", err)
+		return nil, err
+	}
+	line = strings.TrimPrefix(line, t.spec.ReceivedMessageIndication)
+	log.Println(line)
+	cmd := fmt.Sprintf(t.spec.ReceiveUDP, socket, expectedBytes)
+	_, _, err = t.s.SendAndReceive(cmd)
+	if err != nil {
+		log.Printf("Error receiving UDP: %v", err)
+		return nil, err
+	}
+	return []byte{}, nil
 }

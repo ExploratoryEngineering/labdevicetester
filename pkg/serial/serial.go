@@ -20,7 +20,7 @@ type SerialConnection struct {
 
 // NewSerialConnection creates a new SerialConnection
 func NewSerialConnection(device string, baud int, verbose bool) (*SerialConnection, error) {
-	c := &serial.Config{Name: device, Baud: baud, ReadTimeout: time.Second * 5}
+	c := &serial.Config{Name: device, Baud: baud, ReadTimeout: time.Second * 20}
 	s, err := serial.OpenPort(c)
 	if err != nil {
 		return nil, err
@@ -49,6 +49,20 @@ func (s *SerialConnection) SendAndReceive(cmd string) ([]string, []string, error
 	}
 
 	return s.scanResponse(s.scanner)
+}
+
+func (s *SerialConnection) WaitForURC(urc string) (string, error) {
+	for s.scanner.Scan() {
+		line := s.scanner.Text()
+		if s.verbose && line != "" {
+			log.Printf("<-- %s", line)
+		}
+
+		if strings.HasPrefix(line, urc) {
+			return line, nil
+		}
+	}
+	return "", fmt.Errorf("Error: serial closed")
 }
 
 // Close closes the serial connection
