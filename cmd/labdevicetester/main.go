@@ -3,11 +3,11 @@ package main
 import (
 	"flag"
 	"log"
-	"os"
 	"time"
 
 	"github.com/ExploratoryEngineering/labdevicetester/pkg/devicefamily"
 	"github.com/ExploratoryEngineering/labdevicetester/pkg/devicefamily/saran2"
+	"github.com/ExploratoryEngineering/labdevicetester/pkg/otii"
 	"github.com/ExploratoryEngineering/labdevicetester/pkg/serial"
 )
 
@@ -28,6 +28,10 @@ func main() {
 	case "n2":
 		device = saran2.New()
 	}
+
+	// otii.EnableMainPower()
+	// defer otii.DisableMainPower()
+	// otii.Calibrate()
 
 	s, err := serial.NewSerialConnection(*serialDevice, device.BaudRate(), *verbose)
 	if err != nil {
@@ -55,7 +59,7 @@ func main() {
 
 		log.Println("IMSI:", imsi)
 		log.Println("IMEI:", imei)
-		os.Exit(0)
+		return
 	}
 
 	if !clean(device) {
@@ -75,16 +79,17 @@ func main() {
 			break
 		}
 		log.Println("Not connected... status:", status)
-		time.Sleep(1000 * time.Millisecond)
+		time.Sleep(time.Second)
 	}
 
-	if !sendSmallPacket(device, *serverIP) {
-		log.Println("Sending failed")
+	recording := record()
+	if !sendAndReceive(device, *serverIP) {
 		reportError()
 		return
 	}
+	<-recording
 
-	// if !sendAndReceive(device) {
+	// if !sendAndReceive(device, *serverIP) {
 	// 	log.Println("Send and receive failed")
 	// 	reportError()
 	// 	return
@@ -116,9 +121,19 @@ func reportError() {
 
 func clean(d devicefamily.Interface) bool {
 	return d.RebootModule() &&
+		d.SetAPN("telenor.iot") &&
 		d.AutoOperatorSelection() &&
-		d.PowerSaveMode(0, 255, 10) &&
+		d.PowerSaveMode(1, 255, 0) &&
 		d.DisableEDRX()
+}
+
+func record() chan struct{} {
+	ch := make(chan struct{})
+	go func() {
+		otii.Record()
+		ch <- struct{}{}
+	}()
+	return ch
 }
 
 func sendSmallPacket(d devicefamily.Interface, serverIP string) bool {
@@ -133,18 +148,18 @@ func sendSmallPacket(d devicefamily.Interface, serverIP string) bool {
 	return true
 }
 
-// func sendAndReceive(d devicefamily.Interface) bool {
-// 	socket, err := d.CreateSocket("UDP", 1234)
-// 	if err != nil {
-// 		log.Println("Error: ", err)
-// 		reportError()
-// 		return false
-// 	}
-// 	defer d.CloseSocket(socket)
+func sendAndReceive(d devicefamily.Interface, serverIP string) bool {
+	socket, err := d.CreateSocket("UDP", 1234)
+	if err != nil {
+		log.Println("Error: ", err)
+		reportError()
+		return false
+	}
+	defer d.CloseSocket(socket)
 
-// 	d.SendUDP(socket, *serverIP, 1234, []byte("echo hi"))
+	d.SendUDP(socket, serverIP, 1234, []byte("echo hi"))
 
-// 	d.ReceiveUDP(socket, 7)
+	d.ReceiveUDP(socket, 7)
 
-// 	return true
-// }
+	return true
+}

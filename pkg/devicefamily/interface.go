@@ -10,6 +10,7 @@ type Interface interface {
 	IMEI() (int, error)
 	IMSI() (int, error)
 	RebootModule() bool
+	SetAPN(apn string) bool
 	PowerSaveMode(enabled, tau, activeTime uint8) bool
 	AutoOperatorSelection() bool
 	RegistrationStatus() (int, error)

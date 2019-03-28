@@ -15,7 +15,7 @@ type ATDeviceSpec struct {
 	Reboot   string
 	// DisableAutoConnect string
 	// EnableAutoConnect  string
-	// ConfigAPN          string
+	ConfigAPN                 string
 	AutoOperatorSelection     string
 	RegistrationStatus        string
 	PSM                       string
@@ -85,6 +85,16 @@ func (t *ATdevicefamily) RebootModule() bool {
 	return true
 }
 
+func (t *ATdevicefamily) SetAPN(apn string) bool {
+	log.Printf("Set APN to %s...", apn)
+	_, _, err := t.s.SendAndReceive(fmt.Sprintf(t.spec.ConfigAPN, apn))
+	if err != nil {
+		log.Printf("Error: %v", err)
+		return false
+	}
+	return true
+}
+
 func (t *ATdevicefamily) AutoOperatorSelection() bool {
 	log.Println("Auto operator selection...")
 	_, _, err := t.s.SendAndReceive(t.spec.AutoOperatorSelection)
@@ -122,17 +132,6 @@ func (t *ATdevicefamily) RegistrationStatus() (int, error) {
 // 	}
 // 	log.Println("Autoconnect disabled")
 // 	return t.rebootModule()
-// }
-
-// func (t *ATdevicefamily) configAPN() bool {
-// 	log.Println("Configuring telenor.iot APN...")
-// 	cmd := fmt.Sprintf(t.spec.ConfigAPN, "telenor.iot")
-// 	_, _, err := t.s.SendAndReceive(cmd)
-// 	if err != nil {
-// 		log.Printf("Error: %v", err)
-// 	}
-// 	log.Println("APN configured")
-// 	return true
 // }
 
 // func (t *ATdevicefamily) enableAutoconnect() bool {

@@ -47,7 +47,9 @@ func main() {
 			log.Printf("Got %d bytes from %s: %s\n", n, fromAddr, received)
 
 			if strings.HasPrefix(received, "echo ") {
-				serverConn.WriteToUDP(buf[5:], fromAddr)
+				resp := buf[5:n]
+				log.Printf("Echoing %q to %v", resp, fromAddr)
+				serverConn.WriteToUDP(resp, fromAddr)
 			}
 		}
 	}
