@@ -1,11 +1,11 @@
-package n211
+package saran2
 
 import (
-	"github.com/ExploratoryEngineering/labdevicetester/pkg/devicetests"
+	"github.com/ExploratoryEngineering/labdevicetester/pkg/devicefamily"
 )
 
-func New() *devicetests.ATDeviceTests {
-	spec := devicetests.ATDeviceSpec{
+func New() *devicefamily.ATdevicefamily {
+	spec := devicefamily.ATDeviceSpec{
 		BaudRate: 9600,
 		Reboot:   `AT+NRB`,
 		// DisableAutoConnect: `AT+NCONFIG="AUTOCONNECT","FALSE"`,
@@ -21,5 +21,5 @@ func New() *devicetests.ATDeviceTests {
 		ReceiveUDP:                `AT+NSORF=%d,%d`,
 		ReceivedMessageIndication: `+NSONMI`,
 	}
-	return devicetests.New(spec)
+	return devicefamily.New(spec)
 }

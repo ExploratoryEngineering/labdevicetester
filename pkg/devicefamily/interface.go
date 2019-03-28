@@ -1,4 +1,4 @@
-package devicetests
+package devicefamily
 
 import (
 	"github.com/ExploratoryEngineering/labdevicetester/pkg/serial"

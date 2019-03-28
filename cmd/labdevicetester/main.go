@@ -6,25 +6,100 @@ import (
 	"os"
 	"time"
 
-	"github.com/ExploratoryEngineering/labdevicetester/pkg/devicetests"
-	"github.com/ExploratoryEngineering/labdevicetester/pkg/devicetests/n211"
+	"github.com/ExploratoryEngineering/labdevicetester/pkg/devicefamily"
+	"github.com/ExploratoryEngineering/labdevicetester/pkg/devicefamily/saran2"
 	"github.com/ExploratoryEngineering/labdevicetester/pkg/serial"
 )
 
-var device = flag.String("device", "/dev/cu.SLAB_USBtoUART", "Serial device")
-var deviceType = flag.String("type", "", "Device family type (see pkg/devicetests subfolders)")
-var verbose = flag.Bool("v", false, "Verbose output")
-var printIds = flag.Bool("print", false, "Print IMSI and IMEI and exit")
-var serverIP = flag.String("serverip", "10.0.0.1", "IP address to the server receiving data")
+func main() {
+	var (
+		serialDevice = flag.String("device", "/dev/cu.SLAB_USBtoUART", "Serial device")
+		deviceType   = flag.String("type", "", "Device family type (see pkg/devicefamily subfolders)")
+		verbose      = flag.Bool("v", false, "Verbose output")
+		printIds     = flag.Bool("print", false, "Print IMSI and IMEI and exit")
+		serverIP     = flag.String("serverip", "10.0.0.1", "IP address to the server receiving data")
+	)
+	flag.Parse()
+
+	var device devicefamily.Interface
+	switch *deviceType {
+	default:
+		log.Fatal("Invalid device type")
+	case "n211":
+		device = saran2.New()
+	}
+
+	s, err := serial.NewSerialConnection(*serialDevice, device.BaudRate(), *verbose)
+	if err != nil {
+		log.Println("Unable to open serial port:", err)
+		return
+	}
+	defer s.Close()
+
+	device.Init(s)
+
+	if !checkSerial(s) {
+		reportError()
+		return
+	}
+
+	if *printIds {
+		imsi, err := device.IMSI()
+		if err != nil {
+			log.Println("Error: ", err)
+		}
+		imei, err := device.IMEI()
+		if err != nil {
+			log.Println("Error: ", err)
+		}
+
+		log.Println("IMSI:", imsi)
+		log.Println("IMEI:", imei)
+		os.Exit(0)
+	}
+
+	if !clean(device) {
+		log.Println("Clean failed")
+		reportError()
+		return
+	}
+
+	for {
+		status, err := device.RegistrationStatus()
+		if err != nil {
+			log.Println("Status failed")
+			reportError()
+			return
+		}
+		if status == 1 {
+			break
+		}
+		log.Println("Not connected... status:", status)
+		time.Sleep(1000 * time.Millisecond)
+	}
+
+	if !sendSmallPacket(device, *serverIP) {
+		log.Println("Sending failed")
+		reportError()
+		return
+	}
+
+	// if !sendAndReceive(device) {
+	// 	log.Println("Send and receive failed")
+	// 	reportError()
+	// 	return
+	// }
+	log.Println("Success!")
+}
 
 func checkSerial(s *serial.SerialConnection) bool {
 	log.Println("Testing serial device...")
 	_, _, err := s.SendAndReceive("AT")
 	if err != nil {
-		log.Printf("Error: %v", err)
+		log.Println("Error:", err)
 		return false
 	}
-	log.Printf("Device responds OK")
+	log.Println("Device responds OK")
 	return true
 }
 
@@ -39,104 +114,29 @@ func reportError() {
 	log.Println("=======================================")
 }
 
-func main() {
-	var tests devicetests.Interface
-
-	flag.Parse()
-
-	switch *deviceType {
-	default:
-		log.Fatal("Invalid device type")
-	case "n211":
-		tests = n211.New()
-	}
-
-	s, err := serial.NewSerialConnection(*device, tests.BaudRate(), *verbose)
-	if err != nil {
-		log.Printf("Unable to open serial port: %v", err)
-		return
-	}
-	defer s.Close()
-
-	tests.Init(s)
-
-	if !checkSerial(s) {
-		reportError()
-		return
-	}
-
-	if *printIds {
-		imsi, err := tests.IMSI()
-		if err != nil {
-			log.Printf("Error: ", err)
-		}
-		imei, err := tests.IMEI()
-		if err != nil {
-			log.Printf("Error: ", err)
-		}
-
-		log.Printf("IMSI: %d\n", imsi)
-		log.Printf("IMEI: %d\n", imei)
-		os.Exit(0)
-	}
-
-	if !clean(tests) {
-		log.Println("Clean failed")
-		reportError()
-		return
-	}
-
-	for {
-		status, err := tests.RegistrationStatus()
-		if err != nil {
-			log.Println("Status failed")
-			reportError()
-			return
-		}
-		if status == 1 {
-			break
-		}
-		log.Printf("Not connected... status %d\n", status)
-		time.Sleep(1000 * time.Millisecond)
-	}
-
-	if !sendSmallPacket(tests) {
-		log.Println("Sending failed")
-		reportError()
-		return
-	}
-
-	// if !sendAndReceive(tests) {
-	// 	log.Println("Send and receive failed")
-	// 	reportError()
-	// 	return
-	// }
-	log.Println("Success!")
-}
-
-func clean(t devicetests.Interface) bool {
+func clean(t devicefamily.Interface) bool {
 	return t.RebootModule() &&
 		t.AutoOperatorSelection() &&
 		t.PowerSaveMode(0, 255, 10) &&
 		t.DisableEDRX()
 }
 
-func sendSmallPacket(t devicetests.Interface) bool {
+func sendSmallPacket(t devicefamily.Interface, serverIP string) bool {
 	socket, err := t.CreateSocket("UDP", 1234)
 	if err != nil {
-		log.Printf("Error: ", err)
+		log.Println("Error: ", err)
 		reportError()
 		return false
 	}
 	defer t.CloseSocket(socket)
-	t.SendUDP(socket, *serverIP, 1234, []byte("hi"))
+	t.SendUDP(socket, serverIP, 1234, []byte("hi"))
 	return true
 }
 
-// func sendAndReceive(t devicetests.Interface) bool {
+// func sendAndReceive(t devicefamily.Interface) bool {
 // 	socket, err := t.CreateSocket("UDP", 1234)
 // 	if err != nil {
-// 		log.Printf("Error: ", err)
+// 		log.Println("Error: ", err)
 // 		reportError()
 // 		return false
 // 	}

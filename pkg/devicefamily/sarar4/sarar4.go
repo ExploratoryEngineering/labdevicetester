@@ -1,11 +1,11 @@
-package r410
+package sarar4
 
 import (
-	"github.com/ExploratoryEngineering/labdevicetester/pkg/devicetests"
+	"github.com/ExploratoryEngineering/labdevicetester/pkg/devicefamily"
 )
 
-func New() *devicetests.ATDeviceTests {
-	spec := devicetests.ATDeviceSpec{
+func New() *devicefamily.ATdevicefamily {
+	spec := devicefamily.ATDeviceSpec{
 		BaudRate:              115200,
 		Reboot:                `AT+CFUN=15`,
 		AutoOperatorSelection: `AT+COPS=0`,
@@ -16,5 +16,5 @@ func New() *devicetests.ATDeviceTests {
 		CloseSocket:           `AT+NSOCL=%d`,
 		SendUDP:               `AT+NSOST=%d,"%v",%d,%d,"%X"`,
 	}
-	return devicetests.New(spec)
+	return devicefamily.New(spec)
 }
