@@ -12,11 +12,12 @@ func New() *devicetests.ATDeviceTests {
 		// EnableAutoConnect:  `AT+NCONFIG="AUTOCONNECT","TRUE"`,
 		// ConfigAPN:          `AT+CGDCONT=0,"IP","%s"`,
 		AutoOperatorSelection: `AT+COPS=0`,
+		RegistrationStatus:    `AT+CEREG?`,
 		PSM:                   `AT+CPSMS=%d,,,"%08b","%08b"`,
 		DisableEDRX:           `AT+CEDRXS=0,5`,
-		CreateSocket:          `AT+NSOCR="DGRAM",17,1234,1`,
+		CreateUDPSocket:       `AT+NSOCR="DGRAM",17,%d,1`,
 		CloseSocket:           `AT+NSOCL=%d`,
-		SendUDP:               `AT+NSOST=0,"1.2.3.4",1234,2,"ABCD"`,
+		SendUDP:               `AT+NSOST=%d,"%v",%d,%d,"%X"`,
 	}
 	return devicetests.New(spec)
 }

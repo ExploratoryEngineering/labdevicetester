@@ -1,6 +1,7 @@
 package devicetests
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"strconv"
@@ -16,9 +17,11 @@ type ATDeviceSpec struct {
 	// EnableAutoConnect  string
 	// ConfigAPN          string
 	AutoOperatorSelection string
+	RegistrationStatus    string
 	PSM                   string
 	DisableEDRX           string
-	CreateSocket          string
+	CreateUDPSocket       string
+	CreateTCPSocket       string
 	CloseSocket           string
 	SendUDP               string
 }
@@ -42,13 +45,6 @@ func (t *ATDeviceTests) BaudRate() int {
 	return t.spec.BaudRate
 }
 
-func (t *ATDeviceTests) Clean() bool {
-
-	return t.autoOperatorSelection() &&
-		t.powerSaveMode(1, 255, 0) &&
-		t.disableEDRX()
-}
-
 func (t *ATDeviceTests) IMEI() (int, error) {
 	_, urcs, err := t.s.SendAndReceive("AT+CGSN=1")
 	if err != nil {
@@ -69,7 +65,14 @@ func (t *ATDeviceTests) IMSI() (int, error) {
 	return strconv.Atoi(lines[0])
 }
 
-func (t *ATDeviceTests) rebootModule() bool {
+func (t *ATDeviceTests) TestPowerConsumption() bool {
+	// wait for connection
+	// prompt for antenna attenuation change to 0 dBm
+	//
+	return false
+}
+
+func (t *ATDeviceTests) RebootModule() bool {
 	log.Println("Rebooting device...")
 	res, _, err := t.s.SendAndReceive(t.spec.Reboot)
 	if err != nil {
@@ -80,7 +83,7 @@ func (t *ATDeviceTests) rebootModule() bool {
 	return true
 }
 
-func (t *ATDeviceTests) autoOperatorSelection() bool {
+func (t *ATDeviceTests) AutoOperatorSelection() bool {
 	log.Println("Auto operator selection...")
 	_, _, err := t.s.SendAndReceive(t.spec.AutoOperatorSelection)
 	if err != nil {
@@ -88,6 +91,24 @@ func (t *ATDeviceTests) autoOperatorSelection() bool {
 		return false
 	}
 	return true
+}
+
+func (t *ATDeviceTests) RegistrationStatus() (int, error) {
+	log.Println("Registration status...")
+	_, urcs, err := t.s.SendAndReceive(t.spec.RegistrationStatus)
+	if err != nil {
+		log.Printf("Error: %v", err)
+		return 0, err
+	}
+	for _, urc := range urcs {
+		if strings.Index(urc, "+CEREG") != 0 {
+			continue
+		}
+		status := strings.Split(urc, ",")[1]
+		return strconv.Atoi(status)
+	}
+	log.Println("Error: +CEREG response not found")
+	return 0, errors.New("+CEREG response not found")
 }
 
 // func (t *ATDeviceTests) disableAutoconnect() bool {
@@ -123,7 +144,7 @@ func (t *ATDeviceTests) autoOperatorSelection() bool {
 // 	return t.rebootModule()
 // }
 
-func (t *ATDeviceTests) powerSaveMode(enabled, tau, activeTime uint8) bool {
+func (t *ATDeviceTests) PowerSaveMode(enabled, tau, activeTime uint8) bool {
 	log.Printf("Power save mode... %d", enabled)
 	cmd := fmt.Sprintf(t.spec.PSM, enabled, tau, activeTime)
 	log.Println(cmd)
@@ -136,7 +157,7 @@ func (t *ATDeviceTests) powerSaveMode(enabled, tau, activeTime uint8) bool {
 	return true
 }
 
-func (t *ATDeviceTests) disableEDRX() bool {
+func (t *ATDeviceTests) DisableEDRX() bool {
 	log.Println("Disabling eDRX...")
 	_, _, err := t.s.SendAndReceive(t.spec.DisableEDRX)
 	if err != nil {
@@ -147,29 +168,56 @@ func (t *ATDeviceTests) disableEDRX() bool {
 	return true
 }
 
-// func (t *ATDeviceTests) sendUdpPacket(ip string, port int, data []byte) bool {
-// 	log.Println("Sending tiny data packet...")
-// 	response, _, err := t.s.SendAndReceive(t.spec.CreateSocket)
-// 	if err != nil {
-// 		log.Printf("Error creating socket: %v", err)
-// 		return false
-// 	}
-// 	socket, err := strconv.Atoi(response[0])
-// 	if err != nil {
-// 		log.Printf("Error parsing socket number", err)
-// 		return false
-// 	}
+func (t *ATDeviceTests) CreateSocket(protocol string, listenPort int) (int, error) {
+	var cmd string
+	switch protocol {
+	case "UDP":
+		if t.spec.CreateUDPSocket == "" {
+			log.Fatalf("Error: device does not implement UDP socket")
+		}
+		cmd = fmt.Sprintf(t.spec.CreateUDPSocket, listenPort)
+	case "TCP":
+		if t.spec.CreateTCPSocket == "" {
+			log.Fatalf("Error: device does not implement TCP socket")
+		}
+		cmd = fmt.Sprintf(t.spec.CreateTCPSocket, listenPort)
+	default:
+		log.Fatal("protocol not implemented")
+	}
 
-// 	_, _, err = t.s.SendAndReceive(t.spec.SendUDP)
-// 	if err != nil {
-// 		log.Printf("Got error sending packet: %v", err)
-// 		return false
-// 	}
-// 	_, _, err = t.s.SendAndReceive(fmt.Sprintf(t.spec.CloseSocket, socket))
-// 	if err != nil {
-// 		log.Printf("Couldn't close socket: %v", err)
-// 		return false
-// 	}
-// 	log.Println("Successfully sent data")
-// 	return true
-// }
+	response, _, err := t.s.SendAndReceive(cmd)
+	if err != nil {
+		log.Printf("Error creating socket: %v", err)
+		return 0, err
+	}
+	socket, err := strconv.Atoi(response[0])
+	if err != nil {
+		log.Printf("Error parsing socket number", err)
+		return 0, err
+	}
+	return socket, nil
+}
+
+func (t *ATDeviceTests) CloseSocket(socket int) bool {
+	_, _, err := t.s.SendAndReceive(fmt.Sprintf(t.spec.CloseSocket, socket))
+	if err != nil {
+		log.Printf("Couldn't close socket: %v", err)
+		return false
+	}
+	return true
+}
+
+func (t *ATDeviceTests) SendUDP(socket int, ip string, port int, data []byte) bool {
+	log.Println("Sending UDP packet...")
+
+	cmd := fmt.Sprintf(t.spec.SendUDP, socket, ip, port, len(data), data)
+	log.Printf(cmd)
+	_, _, err := t.s.SendAndReceive(cmd)
+	if err != nil {
+		log.Printf("Error sending packet: %v", err)
+		return false
+	}
+
+	log.Println("Successfully sent data")
+	return true
+}

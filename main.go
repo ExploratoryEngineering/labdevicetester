@@ -4,6 +4,7 @@ import (
 	"flag"
 	"log"
 	"os"
+	"time"
 
 	"github.com/ExploratoryEngineering/labdevicetester/pkg/devicetests"
 	"github.com/ExploratoryEngineering/labdevicetester/pkg/devicetests/n211"
@@ -14,6 +15,7 @@ var device = flag.String("device", "/dev/cu.SLAB_USBtoUART", "Serial device")
 var deviceType = flag.String("type", "", "Device family type (see pkg/devicetests subfolders)")
 var verbose = flag.Bool("v", false, "Verbose output")
 var printIds = flag.Bool("print", false, "Print IMSI and IMEI and exit")
+var serverIP = flag.String("serverip", "10.0.0.1", "IP address to the server receiving data")
 
 func checkSerial(s *serial.SerialConnection) bool {
 	log.Println("Testing serial device...")
@@ -78,8 +80,49 @@ func main() {
 		os.Exit(0)
 	}
 
-	if !tests.Clean() {
-		log.Fatal("Clean failed")
+	if !clean(tests) {
+		log.Println("Clean failed")
+		reportError()
+		return
+	}
+
+	for {
+		status, err := tests.RegistrationStatus()
+		if err != nil {
+			log.Println("Status failed")
+			reportError()
+			return
+		}
+		if status == 1 {
+			break
+		}
+		log.Printf("Not connected... status %d\n", status)
+		time.Sleep(1000 * time.Millisecond)
+	}
+
+	if !sendSmallPacket(tests) {
+		log.Println("Sending failed")
+		reportError()
+		return
 	}
 	log.Println("Success!")
+}
+
+func clean(t devicetests.Interface) bool {
+	return t.RebootModule() &&
+		t.AutoOperatorSelection() &&
+		t.PowerSaveMode(0, 255, 10) &&
+		t.DisableEDRX()
+}
+
+func sendSmallPacket(t devicetests.Interface) bool {
+	socket, err := t.CreateSocket("UDP", 1234)
+	if err != nil {
+		log.Printf("Error: ", err)
+		reportError()
+		return false
+	}
+	//defer t.CloseSocket(socket)
+	t.SendUDP(socket, *serverIP, 7, []byte("foo"))
+	return true
 }
