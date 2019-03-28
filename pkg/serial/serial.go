@@ -77,6 +77,9 @@ func (s *SerialConnection) scanResponse(scanner *bufio.Scanner) ([]string, []str
 
 	for s.scanner.Scan() {
 		line := scanner.Text()
+		if s.verbose && line != "" {
+			log.Printf("<-- %s", line)
+		}
 
 		if line == "OK" {
 			return s.splitURCResponse(data[1:], nil)
