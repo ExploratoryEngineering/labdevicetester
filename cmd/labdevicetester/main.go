@@ -19,6 +19,7 @@ func main() {
 		verbose      = flag.Bool("v", false, "Verbose output")
 		printIds     = flag.Bool("printids", false, "Print IMSI and IMEI and exit")
 		serverIP     = flag.String("serverip", "10.0.0.1", "IP address to the server receiving data")
+		otiiEnabled  = flag.Bool("otii", true, "Skip Otii by setting to false")
 	)
 	flag.Parse()
 
@@ -32,6 +33,7 @@ func main() {
 		device = sarar4.New()
 	}
 
+	otii.Init(*otiiEnabled)
 	// if err := otii.EnableMainPower(); err != nil {
 	// 	log.Fatal("Error enabling main power:", err)
 	// }

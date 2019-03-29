@@ -11,7 +11,19 @@ import (
 	"time"
 )
 
+var enabled bool
+
+func Init(enable bool) {
+	enabled = enable
+	if !enabled {
+		log.Println("Otii disabled")
+	}
+}
+
 func EnableMainPower() error {
+	if !enabled {
+		return nil
+	}
 	log.Println("Enabling main power")
 	if err := Run("otii.create_project():enable_main_power(true)"); err != nil {
 		return err
@@ -22,10 +34,16 @@ func EnableMainPower() error {
 }
 
 func DisableMainPower() error {
+	if !enabled {
+		return nil
+	}
 	return Run("otii.create_project():enable_main_power(false)")
 }
 
 func Calibrate() error {
+	if !enabled {
+		return nil
+	}
 	log.Println("Calibrating...")
 	return Run(`
 		local devices = otii.get_devices("Arc")
@@ -37,6 +55,9 @@ func Calibrate() error {
 }
 
 func Record(duration time.Duration) error {
+	if !enabled {
+		return nil
+	}
 	log.Println("Recording started")
 	err := Run(strings.Replace(recordScript, "DURATION", strconv.Itoa(int(duration/time.Millisecond)), -1))
 	log.Println("Recording complete")
@@ -44,6 +65,9 @@ func Record(duration time.Duration) error {
 }
 
 func Run(script string) error {
+	if !enabled {
+		return nil
+	}
 	f, err := ioutil.TempFile("", "otii-script.lua")
 	if err != nil {
 		log.Println("Error opening temporary file:", err)
