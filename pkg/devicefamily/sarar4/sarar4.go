@@ -8,6 +8,7 @@ func New() *devicefamily.ATdevicefamily {
 	spec := devicefamily.ATDeviceSpec{
 		BaudRate:              115200,
 		Reboot:                `AT+COPS=2;+URAT=8;+CFUN=15`,
+		FirmwareVersion:       `ATI9`,
 		ConfigAPN:             `AT+CGDCONT=1,"IP","%s"`,
 		Radio:                 `ATE0+CFUN=%v`,
 		AutoOperatorSelection: `AT+COPS=0`,

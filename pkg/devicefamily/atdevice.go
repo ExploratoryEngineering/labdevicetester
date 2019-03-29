@@ -16,6 +16,7 @@ type ATDeviceSpec struct {
 	Radio    string
 	// DisableAutoConnect string
 	// EnableAutoConnect  string
+	FirmwareVersion           string
 	ConfigAPN                 string
 	AutoOperatorSelection     string
 	RegistrationStatus        string
@@ -46,6 +47,14 @@ func (t *ATdevicefamily) Init(s *serial.SerialConnection) {
 
 func (t *ATdevicefamily) BaudRate() int {
 	return t.spec.BaudRate
+}
+
+func (t *ATdevicefamily) FirmwareVersion() {
+	log.Printf("Firmware version")
+	_, _, err := t.s.SendAndReceive(t.spec.FirmwareVersion)
+	if err != nil {
+		log.Printf("Error: %v", err)
+	}
 }
 
 func (t *ATdevicefamily) IMEI() (int, error) {

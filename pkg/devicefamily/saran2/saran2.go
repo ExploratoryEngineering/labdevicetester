@@ -6,9 +6,10 @@ import (
 
 func New() *devicefamily.ATdevicefamily {
 	spec := devicefamily.ATDeviceSpec{
-		BaudRate: 9600,
-		Reboot:   `AT+NRB`,
-		Radio:    `AT+CFUN=%v`,
+		BaudRate:        9600,
+		Reboot:          `AT+NRB`,
+		FirmwareVersion: `ATI9`,
+		Radio:           `AT+CFUN=%v`,
 		// DisableAutoConnect: `AT+NCONFIG="AUTOCONNECT","FALSE"`,
 		// EnableAutoConnect:  `AT+NCONFIG="AUTOCONNECT","TRUE"`,
 		ConfigAPN:                 `AT+CGDCONT=0,"IP","%s";+CGATT=1`,

@@ -14,6 +14,7 @@ const (
 type Interface interface {
 	BaudRate() int
 	Init(*serial.SerialConnection)
+	FirmwareVersion()
 	IMEI() (int, error)
 	IMSI() (int, error)
 	RebootModule() bool

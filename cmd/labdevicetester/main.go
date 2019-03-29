@@ -2,7 +2,9 @@ package main
 
 import (
 	"flag"
+	"io"
 	"log"
+	"os"
 	"time"
 
 	"github.com/ExploratoryEngineering/labdevicetester/pkg/devicefamily"
@@ -19,9 +21,19 @@ func main() {
 		verbose      = flag.Bool("v", false, "Verbose output")
 		printIds     = flag.Bool("printids", false, "Print IMSI and IMEI and exit")
 		serverIP     = flag.String("serverip", "10.0.0.1", "IP address to the server receiving data")
+		apn          = flag.String("apn", "tdt2.telenor.iot", "The APN to connect to")
 		otiiEnabled  = flag.Bool("otii", true, "Skip Otii by setting to false")
 	)
 	flag.Parse()
+
+	startTime := time.Now().Format("2006-01-02 15:04:05")
+	logFile, err := os.OpenFile("captures/labdevicetester-"+*deviceType+"-"+startTime+".log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Fatal("Unable to open log file:", err)
+	}
+	mw := io.MultiWriter(os.Stdout, logFile)
+	log.SetOutput(mw)
+	log.SetFlags(log.Ltime)
 
 	var device devicefamily.Interface
 	switch *deviceType {
@@ -71,9 +83,9 @@ func main() {
 		return
 	}
 
-	// TODO print firmware version
+	device.FirmwareVersion()
 
-	if !clean(device) {
+	if !clean(device, *apn) {
 		log.Println("Clean failed")
 		reportError()
 		return
@@ -99,9 +111,12 @@ func main() {
 		time.Sleep(time.Second)
 	}
 
-	recording := record(20 * time.Second)
+	time.Sleep(30 * time.Second)
+
+	recording := record(30 * time.Second)
+	time.Sleep(5 * time.Second)
 	for i := 0; i < 3; i++ {
-		if !sendAndReceive(device, *serverIP) {
+		if !sendSmallPacket(device, *serverIP) {
 			reportError()
 			return
 		}
@@ -111,11 +126,6 @@ func main() {
 
 	// TODO print status
 
-	// if !sendAndReceive(device, *serverIP) {
-	// 	log.Println("Send and receive failed")
-	// 	reportError()
-	// 	return
-	// }
 	log.Println("Success!")
 }
 
@@ -141,16 +151,17 @@ func reportError() {
 	log.Println("=======================================")
 }
 
-func clean(d devicefamily.Interface) bool {
+func clean(d devicefamily.Interface, apn string) bool {
 	return d.RebootModule() &&
 		d.SetRadio(devicefamily.RadioFull) &&
-		d.SetAPN("telenor.iot") &&
+		d.SetAPN(apn) &&
 		//d.AutoOperatorSelection() &&
 		d.PowerSaveMode(1, 223, 1) &&
 		d.DisableEDRX()
 }
 
 func record(duration time.Duration) chan struct{} {
+	// TODO create captures folder
 	ch := make(chan struct{})
 	go func() {
 		otii.Record(duration)
