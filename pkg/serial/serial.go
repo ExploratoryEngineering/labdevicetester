@@ -83,6 +83,7 @@ func (s *SerialConnection) splitURCResponse(cmds []string, err error) ([]string,
 		}
 		data = append(data, v)
 	}
+	time.Sleep(20 * time.Millisecond)
 	return data, urcs, err
 }
 

@@ -79,12 +79,18 @@ func main() {
 		return
 	}
 
+	time.Sleep(time.Second * 5)
+
+	failCount := 0
 	for {
 		status, err := device.RegistrationStatus()
 		if err != nil {
 			log.Println("Status failed")
-			reportError()
-			return
+			failCount++
+			if failCount > 5 {
+				reportError()
+				return
+			}
 		}
 		if status == 1 {
 			break
@@ -94,7 +100,6 @@ func main() {
 	}
 
 	recording := record(20 * time.Second)
-	time.Sleep(time.Second * 30)
 	for i := 0; i < 3; i++ {
 		if !sendAndReceive(device, *serverIP) {
 			reportError()
@@ -175,9 +180,19 @@ func sendAndReceive(d devicefamily.Interface, serverIP string) bool {
 	}
 	defer d.CloseSocket(socket)
 
-	d.SendUDP(socket, serverIP, 1234, devicefamily.SendFlagReleaseAfterNextReply, []byte("echo hi"))
+	time.Sleep(1 * time.Second)
 
-	d.ReceiveUDP(socket, 7)
+	if !d.SendUDP(socket, serverIP, 1234, devicefamily.SendFlagReleaseAfterNextReply, []byte("echo hi")) {
+		reportError()
+		return false
+	}
+
+	_, err = d.ReceiveUDP(socket, 7)
+	if err != nil {
+		log.Printf("Error receiving: %v", err)
+		reportError()
+		return false
+	}
 
 	return true
 }

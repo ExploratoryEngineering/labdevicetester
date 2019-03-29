@@ -192,6 +192,8 @@ func (t *ATdevicefamily) DisableEDRX() bool {
 }
 
 func (t *ATdevicefamily) CreateSocket(protocol string, listenPort int) (int, error) {
+	log.Printf("Create socket")
+
 	var cmd string
 	switch protocol {
 	case "UDP":
@@ -208,16 +210,27 @@ func (t *ATdevicefamily) CreateSocket(protocol string, listenPort int) (int, err
 		log.Fatal("protocol not implemented")
 	}
 
-	response, _, err := t.s.SendAndReceive(cmd)
+	lines, urcs, err := t.s.SendAndReceive(cmd)
 	if err != nil {
 		log.Printf("Error creating socket: %v", err)
 		return 0, err
 	}
-	socket, err := strconv.Atoi(response[0])
-	if err != nil {
-		log.Printf("Error parsing socket number", err)
-		return 0, err
+
+	var socket int
+	if len(lines) > 0 {
+		socket, err = strconv.Atoi(lines[0])
+		if err != nil {
+			log.Printf("Error parsing socket number", err)
+			return 0, err
+		}
+	} else if len(urcs) > 0 && strings.HasPrefix(urcs[0], "+USOCR") {
+		socket, err = strconv.Atoi(urcs[0][8:])
+		if err != nil {
+			log.Printf("Error parsing +USOCR socket number", err)
+			return 0, err
+		}
 	}
+
 	return socket, nil
 }
 
@@ -247,15 +260,18 @@ func (t *ATdevicefamily) SendUDP(socket int, ip string, port int, flag SendFlag,
 func (t *ATdevicefamily) ReceiveUDP(socket, expectedBytes int) ([]byte, error) {
 	log.Println("Receiving UDP Packet...")
 
-	line, err := t.s.WaitForURC(t.spec.ReceivedMessageIndication)
-	if err != nil {
-		log.Printf("Error receive URC: %v", err)
-		return nil, err
+	if t.spec.ReceivedMessageIndication != "" {
+		line, err := t.s.WaitForURC(t.spec.ReceivedMessageIndication)
+		if err != nil {
+			log.Printf("Error receive URC: %v", err)
+			return nil, err
+		}
+		line = strings.TrimPrefix(line, t.spec.ReceivedMessageIndication)
+		log.Println(line)
 	}
-	line = strings.TrimPrefix(line, t.spec.ReceivedMessageIndication)
-	log.Println(line)
+
 	cmd := fmt.Sprintf(t.spec.ReceiveUDP, socket, expectedBytes)
-	_, _, err = t.s.SendAndReceive(cmd)
+	_, _, err := t.s.SendAndReceive(cmd)
 	if err != nil {
 		log.Printf("Error receiving UDP: %v", err)
 		return nil, err

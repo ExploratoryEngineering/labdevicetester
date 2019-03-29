@@ -11,7 +11,7 @@ func New() *devicefamily.ATdevicefamily {
 		Radio:    `AT+CFUN=%v`,
 		// DisableAutoConnect: `AT+NCONFIG="AUTOCONNECT","FALSE"`,
 		// EnableAutoConnect:  `AT+NCONFIG="AUTOCONNECT","TRUE"`,
-		ConfigAPN:                 `AT+CGDCONT=0,"IP","%s"`,
+		ConfigAPN:                 `AT+CGDCONT=0,"IP","%s";+CGATT=1`,
 		AutoOperatorSelection:     `AT+COPS=0`,
 		RegistrationStatus:        `AT+CEREG?`,
 		PSM:                       `AT+CPSMS=%d,,,"%08b","%08b"`,
