@@ -116,6 +116,10 @@ box:set_max_current(0.5)
 box:enable_channel("mc", true)
 box:enable_channel("mv", true)
 
+// box:set_adc_resistor(10)
+// box:enable_channel("ac", true)
+// box:enable_channel("av", true)
+
 project:start()
 otii.msleep(DURATION)
 project:stop()
