@@ -4,6 +4,13 @@ import (
 	"github.com/ExploratoryEngineering/labdevicetester/pkg/serial"
 )
 
+type RadioFunctionality int
+
+const (
+	RadioOff RadioFunctionality = iota
+	RadioFull
+)
+
 type Interface interface {
 	BaudRate() int
 	Init(*serial.SerialConnection)
@@ -11,6 +18,7 @@ type Interface interface {
 	IMSI() (int, error)
 	RebootModule() bool
 	SetAPN(apn string) bool
+	SetRadio(RadioFunctionality) bool
 	PowerSaveMode(enabled, tau, activeTime uint8) bool
 	AutoOperatorSelection() bool
 	RegistrationStatus() (int, error)

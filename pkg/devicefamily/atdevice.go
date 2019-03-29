@@ -13,6 +13,7 @@ import (
 type ATDeviceSpec struct {
 	BaudRate int
 	Reboot   string
+	Radio    string
 	// DisableAutoConnect string
 	// EnableAutoConnect  string
 	ConfigAPN                 string
@@ -88,6 +89,27 @@ func (t *ATdevicefamily) RebootModule() bool {
 func (t *ATdevicefamily) SetAPN(apn string) bool {
 	log.Printf("Set APN to %s...", apn)
 	_, _, err := t.s.SendAndReceive(fmt.Sprintf(t.spec.ConfigAPN, apn))
+	if err != nil {
+		log.Printf("Error: %v", err)
+		return false
+	}
+	return true
+}
+
+func (t *ATdevicefamily) SetRadio(fun RadioFunctionality) bool {
+	log.Println("Radio functionality")
+	radioFun := ""
+	switch fun {
+	case RadioOff:
+		radioFun = "0"
+	case RadioFull:
+		radioFun = "1"
+	default:
+		log.Fatalln("Radio functionality not implemented")
+		return false
+	}
+	cmd := fmt.Sprintf(t.spec.Radio, radioFun)
+	_, _, err := t.s.SendAndReceive(cmd)
 	if err != nil {
 		log.Printf("Error: %v", err)
 		return false

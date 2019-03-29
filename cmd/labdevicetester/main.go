@@ -7,6 +7,7 @@ import (
 
 	"github.com/ExploratoryEngineering/labdevicetester/pkg/devicefamily"
 	"github.com/ExploratoryEngineering/labdevicetester/pkg/devicefamily/saran2"
+	"github.com/ExploratoryEngineering/labdevicetester/pkg/devicefamily/sarar4"
 	"github.com/ExploratoryEngineering/labdevicetester/pkg/otii"
 	"github.com/ExploratoryEngineering/labdevicetester/pkg/serial"
 )
@@ -27,6 +28,8 @@ func main() {
 		log.Fatal("Invalid device type")
 	case "n2":
 		device = saran2.New()
+	case "r4":
+		device = sarar4.New()
 	}
 
 	// if err := otii.EnableMainPower(); err != nil {
@@ -66,6 +69,8 @@ func main() {
 		return
 	}
 
+	// TODO print firmware version
+
 	if !clean(device) {
 		log.Println("Clean failed")
 		reportError()
@@ -87,7 +92,7 @@ func main() {
 	}
 
 	recording := record(20 * time.Second)
-	time.Sleep(time.Second)
+	time.Sleep(time.Second * 30)
 	for i := 0; i < 3; i++ {
 		if !sendAndReceive(device, *serverIP) {
 			reportError()
@@ -96,6 +101,8 @@ func main() {
 		time.Sleep(5 * time.Second)
 	}
 	<-recording
+
+	// TODO print status
 
 	// if !sendAndReceive(device, *serverIP) {
 	// 	log.Println("Send and receive failed")
@@ -129,9 +136,10 @@ func reportError() {
 
 func clean(d devicefamily.Interface) bool {
 	return d.RebootModule() &&
+		d.SetRadio(devicefamily.RadioFull) &&
 		d.SetAPN("telenor.iot") &&
-		d.AutoOperatorSelection() &&
-		d.PowerSaveMode(1, 255, 1) &&
+		//d.AutoOperatorSelection() &&
+		d.PowerSaveMode(1, 223, 1) &&
 		d.DisableEDRX()
 }
 

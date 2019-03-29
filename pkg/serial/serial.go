@@ -20,7 +20,7 @@ type SerialConnection struct {
 
 // NewSerialConnection creates a new SerialConnection
 func NewSerialConnection(device string, baud int, verbose bool) (*SerialConnection, error) {
-	c := &serial.Config{Name: device, Baud: baud, ReadTimeout: time.Second * 20}
+	c := &serial.Config{Name: device, Baud: baud, ReadTimeout: time.Second * 30}
 	s, err := serial.OpenPort(c)
 	if err != nil {
 		return nil, err
@@ -99,12 +99,12 @@ func (s *SerialConnection) scanResponse(scanner *bufio.Scanner) ([]string, []str
 			return s.splitURCResponse(data[1:], nil)
 		}
 
-		if line == "ERROR" {
-			return s.splitURCResponse(data, fmt.Errorf("ERROR: '%v'", data))
+		if strings.Contains(line, "ERROR") {
+			return s.splitURCResponse(data, fmt.Errorf("ERROR: '%v'", line))
 		}
 
 		if line == "ABORT" {
-			return s.splitURCResponse(data, fmt.Errorf("ABORT: '%v'", data))
+			return s.splitURCResponse(data, fmt.Errorf("ABORT: '%v'", line))
 		}
 		data = append(data, line)
 	}
