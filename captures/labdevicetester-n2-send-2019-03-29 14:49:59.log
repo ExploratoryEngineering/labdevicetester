@@ -1,0 +1,84 @@
+14:49:59 Calibrating...
+14:50:03 Testing serial device...
+14:50:03 --> AT
+14:50:03 <-- OK
+14:50:03 Device responds OK
+14:50:03 Firmware version
+14:50:03 --> ATI9
+14:50:03 <-- 06.57,A09.06
+14:50:03 <-- OK
+14:50:03 Rebooting device...
+14:50:03 --> AT+NRB
+14:50:03 <-- REBOOTING
+14:50:07 <-- îÒÊî
+14:50:07 <-- REBOOT_CAUSE_APPLICATION_AT
+14:50:07 <-- u-blox 
+14:50:07 <-- OK
+14:50:07 Rebooted OK
+14:50:07 Radio functionality
+14:50:07 --> AT+CFUN=1
+14:50:09 <-- OK
+14:50:09 Set APN to tdt2.telenor.iot...
+14:50:09 --> AT+CGDCONT=0,"IP","tdt2.telenor.iot";+CGATT=1
+14:50:09 <-- OK
+14:50:09 Power save mode... 1
+14:50:09 AT+CPSMS=1,,,"11011111","00000001"
+14:50:09 --> AT+CPSMS=1,,,"11011111","00000001"
+14:50:09 <-- OK
+14:50:09 Power save mode configured
+14:50:09 Disabling eDRX...
+14:50:09 --> AT+CEDRXS=0,5
+14:50:09 <-- OK
+14:50:09 eDRX disabled
+14:50:14 Registration status...
+14:50:14 --> AT+CEREG?
+14:50:14 <-- OK
+14:50:14 Error: +CEREG response not found
+14:50:14 Status failed
+14:50:14 Not connected... status: 0
+14:50:15 Registration status...
+14:50:15 --> AT+CEREG?
+14:50:15 <-- +UFOTAS: 0,1
+14:50:15 <-- +CEREG: 0,2
+14:50:15 <-- OK
+14:50:15 Not connected... status: 2
+14:50:16 Registration status...
+14:50:16 --> AT+CEREG?
+14:50:16 <-- +CEREG: 0,1
+14:50:16 <-- OK
+14:50:46 Recording started
+14:50:51 Create socket
+14:50:51 --> AT+NSOCR="DGRAM",17,1234,1
+14:50:51 <-- +CEREG: 0,1
+14:50:51 <-- OK
+14:50:51 Sending UDP packet...
+14:50:51 --> AT+NSOSTF=0,"13.53.172.78",1234,0x200,2,"6869"
+14:50:51 <-- 0
+14:50:51 <-- OK
+14:50:51 Successfully sent data
+14:50:51 --> AT+NSOCL=0
+14:50:51 <-- OK
+14:50:56 Create socket
+14:50:56 --> AT+NSOCR="DGRAM",17,1234,1
+14:50:56 <-- 0
+14:50:56 <-- OK
+14:50:56 Sending UDP packet...
+14:50:56 --> AT+NSOSTF=0,"13.53.172.78",1234,0x200,2,"6869"
+14:50:57 <-- 0,2
+14:50:57 <-- OK
+14:50:57 Successfully sent data
+14:50:57 --> AT+NSOCL=0
+14:50:57 <-- OK
+14:51:02 Create socket
+14:51:02 --> AT+NSOCR="DGRAM",17,1234,1
+14:51:02 <-- 0
+14:51:02 <-- OK
+14:51:02 Sending UDP packet...
+14:51:02 --> AT+NSOSTF=0,"13.53.172.78",1234,0x200,2,"6869"
+14:51:02 <-- 0,2
+14:51:02 <-- OK
+14:51:02 Successfully sent data
+14:51:02 --> AT+NSOCL=0
+14:51:02 <-- OK
+14:51:17 Recording complete
+14:51:17 Success!
